@@ -40,38 +40,81 @@
     </ion-header-bar> <!-- end of header -->
 
     <ion-header-bar align-title="center" class="bar-subheader bar-light">
-      <span class="title" ng-bind="tempo"></span>
+      <div  ng-show="tempoActive">
+        <i class="icon ion-ios-analytics-outline" id="effectIcon"></i>
+        <span class="title" ng-bind="tempo"></span>
+      </div>
+      <div ng-show="segmentActive">
+        <i class="icon ion-ios-timer-outline" id="effectIcon"></i>
+        <span class="title"><span ng-bind="start"> </span>
+        <span ng-bind="end"></span>
+        </span>
+      </div>
     </ion-header-bar> <!-- end of subheader -->
+    
 
-    <ion-content ng-show="DEBUG" class="has-subheader">
+    <ion-content scroll="false">
+    <div ng-show="DEBUG" class="has-subheader">
     {{'diameter: '+ diameter }}<br>
     {{'tempo: '+ tempo + ' level: '+ levelCount +'/'+level}} <br>
     {{'x: '+ x + ' y: ' + y}} <br>
     {{'deg: '+ deg + ' rad: ' + rad}}<br>
     {{'slow? '+ slow}} <br>
     {{'song name: ' + songName +' song src: '+ song.src}}<br>
-    
-    </ion-content> <!-- end of debug -->
+    {{'current position: ' + currPos}}<br>
+    {{'duration: ' + song.duration}}
+    </div> <!-- end of debug -->
 
-    <div class="center circle outer" ng-model="slider" style="width:{{diameter}}px;height:{{diameter}}px;">
+    <div ng-show="tempoActive">
+    <div class="center circle outer darkblue" ng-model="slider" style="width:{{diameter}}px;height:{{diameter}}px;">
 
-      <div class="center" on-drag="tempoChange($event)" data-tap-disabled="true" ng-model="bar" id="bar">
-      </div> <!-- end of tempo bar -->
+      <div class="center knob knob-blue" on-drag="tempoChange($event)" data-tap-disabled="true"  id="tempoKnob">
+      </div> <!-- end of tempo knob -->
 
-      <div class="center circle inner" ng-click="playPause()" id="songChooser" >
+      <div class="center circle inner lightblue" ng-click="playPause()" id="songChooser" >
         <div class="circle state" ng-show="uploaded">
           <p id="songName" ng-bind="songName"></p>
-          <i class="icon ion-upload" id="playPauseIcon"></i>
+          <i class="icon ion-upload playPauseIcon"></i>
         </div>
         <label class="circle state" ng-hide="uploaded">
           <p>Upload Song</p>
           <i class="icon ion-upload"></i>
           <input type="file" id="songFile" fileread callback-fn="uploadSong(file)" accept="audio/*" capture="microphone" ng-hide="true" />
         </label>
-        <audio id="song"></audio>
+        <audio loop id="song"></audio>
 
       </div> <!-- end of inner circle -->
     </div> <!-- end of outer circle -->
+    </div> <!-- end of tempo circle -->
+
+    <div ng-show="segmentActive">
+    <div class="center circle outer darkred" ng-model="slider" style="width:{{diameter}}px;height:{{diameter}}px;">
+
+      <div class="center knob knob-red" on-drag="startChange($event)" data-tap-disabled="true" id="segmentKnob">
+      </div> <!-- end of segment knob -->
+
+      <div class="center circle inner lightred" ng-click="playPause()" id="songChooser" >
+        <div class="circle state" ng-show="uploaded">
+          <p id="songName" ng-bind="songName"></p>
+          <i class="icon ion-upload playPauseIcon"></i>
+        </div>
+        <label class="circle state" ng-hide="uploaded">
+          <p>Upload Song</p>
+          <i class="icon ion-upload"></i>
+          <input type="file" id="songFile" fileread callback-fn="uploadSong(file)" accept="audio/*" capture="microphone" ng-hide="true" />
+        </label>
+        <!--<audio loop id="song"></audio>-->
+
+      </div> <!-- end of inner circle -->
+    </div> <!-- end of outer circle -->
+    </div> <!-- end of segment circle -->
+
+    <div class="buttons" data-tap-disabled="true">
+      <button class="button lightblue" ng-click="controlTempo()"><i class="icon icon-white ion-ios-analytics-outline"></i></button>
+      <button class="button lightred" ng-click="controlSegment()"><i class="icon icon-white ion-ios-timer-outline"></i></button>
+    </div>
+      
+    </ion-content> 
 
     <ion-footer-bar align-title="center" class="bar-stable">
       <div class="buttons" ng-click="decreaseLevel()" data-tap-disabled="true">

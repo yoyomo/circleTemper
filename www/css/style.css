@@ -5,7 +5,7 @@ html, body{
 }
 
 .center{
-	position:absolute;
+	position:relative;
 	left:0; right:0;
 	top:0; bottom:0;
 	margin: auto;
@@ -16,13 +16,11 @@ html, body{
 }
 
 .outer {
-	background: #1f4860;
 	width:0;
 	height:0;
 }
 
-#bar {
-	background: #b2d3e6;
+.knob {
 	width: 15%;
 	height: 51%;
 	margin-bottom: 50%;
@@ -32,12 +30,35 @@ html, body{
 }
 
 .inner {
-	background: #529cc7;
+	position:absolute;
 	width:66%;
 	height:66%;
 	text-align: center;
 }
+.darkblue {
+	background: #1f4860;
+}
+.lightblue {
+	background: #529cc7;
+}
+.knob-blue{
+	background: #b2d3e6;
+}
 
+.darkred{
+	background: #5b0d0d;
+}
+.lightred{
+	background: #ce2f2f;
+}
+.knob-red {
+	background: #f9f9f9;
+}
+
+
+.icon-white {
+	color: white;
+}
 .state {
 	color: white;
 	font-family: "Courier", Courier, monospace;
@@ -78,15 +99,6 @@ input[type=file] {
 	opacity: 0;
 	width:0;
 	height:0;
-}
-
-.waveform {
-	position: absolute;
-	right: 0;
-	bottom: 0;
-  	left: 0;
-  	padding: 2rem;
-  	z-index: 0;
 }
 
 /*input[type=range]

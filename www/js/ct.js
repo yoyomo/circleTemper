@@ -15,6 +15,7 @@ angular.module('circleTemper', ['ionic'])
   var prevX;
   var prevY;
   var playPauseIcon;
+  var effectIcon;
   var blob;
   var songChooser;
   var songName;
@@ -53,24 +54,28 @@ angular.module('circleTemper', ['ionic'])
     $scope.songName = "";
     $scope.uploaded = false;
     $scope.song = document.getElementById("song");
-    playPauseIcon = document.getElementById('playPauseIcon');
+    playPauseIcon = document.getElementsByClassName('playPauseIcon');
+    effectIcon = document.getElementById("effectIcon");
     songChooser = document.getElementById("songChooser");
     songName = document.getElementById("songName");
     songFile = document.getElementById("songFile");
     canvas = document.createElement('canvas');
     ctx = canvas.getContext("2d");
     // ctx.font = "11px Arial"; 
+    $scope.tempoActive = true;
+    $scope.segmentActive = false;
 
     $scope.start = $scope.end = 0;
 
   }; $scope.initialize(); // call to initialize
 
+
   /* 
-   * Change the tempo according to
+   * Change the knob according to
    * mouse's x & y coordinates
    */
-  $scope.tempoChange = function(e) {
-
+  getKnobValue = function(e,knob){
+    var value;
     //rearrange coord. with point of reference
     $scope.x = (rotY) - e.gesture.center.pageY;
     $scope.y = (rotX) - e.gesture.center.pageX;
@@ -109,27 +114,58 @@ angular.module('circleTemper', ['ionic'])
     }
 
     //update rotation & tempo
-    $scope.tempo = 1 - ($scope.rad / (DOS_PI * $scope.level));
-    if($scope.tempo < 0){
+    if($scope.tempoActive){
+      value = 1 - ($scope.rad / (DOS_PI * $scope.level));
+    }
+    if($scope.segmentActive){
+      value = - ($scope.rad / (DOS_PI * $scope.level)) * $scope.song.duration;
+    }
+    
+    //protect from negative values
+    if(value< 0){
       $scope.levelCount = $scope.level;
-      $scope.tempo = 0;
+      value = 0;
       $scope.rad = DOS_PI * $scope.level;
       $scope.deg = 360 * $scope.level;
-      return;
+      return value;
     } 
-    $scope.updateRotation();
-    $scope.updatePlaybackRate();
+    
+    $scope.updateRotation(knob);
 
     //exiting
     prevX = $scope.x;
     prevY = $scope.y;
+
+    return value;
+  }
+
+  /* 
+   * Change the tempo according to
+   * mouse's x & y coordinates
+   */
+  $scope.tempoChange = function(e) {
+
+    $scope.tempo = getKnobValue(e,"tempoKnob");
+    $scope.updatePlaybackRate();
+
+  }
+
+  /* 
+   * Change the tempo according to
+   * mouse's x & y coordinates
+   */
+  $scope.startChange = function(e) {
+
+    $scope.start = getKnobValue(e,"segmentKnob");
+    $scope.song.currentTime = $scope.start;
+
   }
 
   /* 
    * Graphically change the position of the bar
    */
-  $scope.updateRotation = function() {
-    document.getElementById("bar").style.transform="rotate("+(-$scope.rad)+"rad)";
+  $scope.updateRotation = function(knob) {
+    document.getElementById(knob).style.transform="rotate("+(-$scope.rad)+"rad)";
   }
 
   /* 
@@ -147,6 +183,7 @@ angular.module('circleTemper', ['ionic'])
   $scope.decreaseLevel = function(){
     $scope.level--;
     if($scope.level < 1) $scope.level = 1;
+
   }
 
   /* 
@@ -154,6 +191,7 @@ angular.module('circleTemper', ['ionic'])
    */
   $scope.increaseLevel = function(){
     $scope.level++;
+
   }  
 
   /* 
@@ -171,8 +209,11 @@ angular.module('circleTemper', ['ionic'])
     var src = blob.createObjectURL(fileread);
     $scope.song.setAttribute('src',src);
     $scope.song.playbackRate = $scope.tempo;
-    angular.element(playPauseIcon).removeClass('ion-upload');
-    angular.element(playPauseIcon).addClass('ion-play');
+    for(var i=0;i<playPauseIcon.length; i++){
+      angular.element(playPauseIcon[i]).removeClass('ion-upload');
+      angular.element(playPauseIcon[i]).addClass('ion-play');
+    }
+    
     $scope.updatePlaybackRate();
     $scope.song.muted = false;
     $scope.uploaded = true;
@@ -186,13 +227,17 @@ angular.module('circleTemper', ['ionic'])
       
       if($scope.song.paused){
         $scope.song.play();
-        angular.element(playPauseIcon).removeClass('ion-play');
-        angular.element(playPauseIcon).addClass('ion-pause');
+        for(var i=0;i<playPauseIcon.length; i++){
+          angular.element(playPauseIcon[i]).removeClass('ion-play');
+          angular.element(playPauseIcon[i]).addClass('ion-pause');
+        }
       }
       else{
         $scope.song.pause();
-        angular.element(playPauseIcon).removeClass('ion-pause');
-        angular.element(playPauseIcon).addClass('ion-play');
+        for(var i=0;i<playPauseIcon.length; i++){
+          angular.element(playPauseIcon[i]).removeClass('ion-pause');
+          angular.element(playPauseIcon[i]).addClass('ion-play');
+        }
       }
     }
   }
@@ -204,15 +249,20 @@ angular.module('circleTemper', ['ionic'])
   $scope.reset = function(){
 
     $scope.initialize();
-    $scope.updateRotation();
+    $scope.updateRotation("tempoKnob");
     $scope.updatePlaybackRate();
+    $scope.updateRotation("segmentKnob");
+
     $scope.song.pause();
     $scope.song.setAttribute('src','');
     songFile.value = '';
     $scope.songName = '';
-    angular.element(playPauseIcon).removeClass('ion-play');
-    angular.element(playPauseIcon).removeClass('ion-pause');
-    angular.element(playPauseIcon).addClass('ion-upload');
+
+    for(var i=0; i<playPauseIcon.length; i++){
+      angular.element(playPauseIcon[i]).removeClass('ion-play');
+      angular.element(playPauseIcon[i]).removeClass('ion-pause');
+      angular.element(playPauseIcon[i]).addClass('ion-upload');
+    }
     angular.element(songFile).removeClass('marquee');
     
   }
@@ -254,6 +304,23 @@ angular.module('circleTemper', ['ionic'])
     console.log(data.name+' region: '+data.start+','+data.end);
 
   }
+
+  clearEffects = function(){
+    $scope.tempoActive = false;
+    $scope.segmentActive = false;
+  }
+
+  $scope.controlTempo = function(){
+    clearEffects();
+    $scope.tempoActive = true;
+  }
+
+  $scope.controlSegment = function(){
+    clearEffects();
+    $scope.segmentActive = true;
+
+  }
+
 
 })
 
