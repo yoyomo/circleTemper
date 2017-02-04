@@ -250,15 +250,21 @@ angular.module('circleTemper', ['ionic'])
     $scope.updatePlaybackRate();
     $scope.song.muted = false;
 
+    $scope.song.ondurationchange = function(){
+      $scope.end = $scope.song.duration;
+    };
     $scope.song.ontimeupdate = function(){
-      if(!$scope.end){
-        $scope.end = $scope.song.duration;
-      }
+      var buffer = 0.44;
+      
       if(($scope.end > $scope.start)){
-        if($scope.song.currentTime >= $scope.end){
+        if($scope.song.currentTime > ($scope.end - buffer)) {
+          console.log($scope.song.currentTime+" > "+$scope.end);
           $scope.song.currentTime = $scope.start;
           if(!$scope.song.loop){
             $scope.pause();   
+          }
+          else{
+            //$scope.play();
           }
         }
       }
