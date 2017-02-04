@@ -44,7 +44,13 @@
         <i class="icon ion-ios-analytics-outline" id="effectIcon"></i>
         <span class="title" ng-bind="tempo"></span>
       </div>
-      <div ng-show="segmentActive">
+      <div ng-show="startActive">
+        <i class="icon ion-ios-timer-outline" id="effectIcon"></i>
+        <span class="title"><span ng-bind="start"> </span>
+        <span ng-bind="end"></span>
+        </span>
+      </div>
+      <div ng-show="endActive">
         <i class="icon ion-ios-timer-outline" id="effectIcon"></i>
         <span class="title"><span ng-bind="start"> </span>
         <span ng-bind="end"></span>
@@ -62,7 +68,7 @@
     {{'slow? '+ slow}} <br>
     {{'song name: ' + songName +' song src: '+ song.src}}<br>
     {{'current position: ' + currPos}}<br>
-    {{'duration: ' + song.duration}}
+    {{'duration: ' + song.duration}}<br>
     </div> <!-- end of debug -->
 
     <div ng-show="tempoActive">
@@ -81,17 +87,39 @@
           <i class="icon ion-upload"></i>
           <input type="file" id="songFile" fileread callback-fn="uploadSong(file)" accept="audio/*" capture="microphone" ng-hide="true" />
         </label>
-        <audio loop id="song"></audio>
+        <audio id="song"></audio>
 
       </div> <!-- end of inner circle -->
     </div> <!-- end of outer circle -->
     </div> <!-- end of tempo circle -->
 
-    <div ng-show="segmentActive">
+    <div ng-show="startActive">
+    <div class="center circle outer darkgreen" ng-model="slider" style="width:{{diameter}}px;height:{{diameter}}px;">
+
+      <div class="center knob knob-green" on-drag="startChange($event)" data-tap-disabled="true" id="startKnob">
+      </div> <!-- end of start knob -->
+
+      <div class="center circle inner lightgreen" ng-click="playPause()" id="songChooser" >
+        <div class="circle state" ng-show="uploaded">
+          <p id="songName" ng-bind="songName"></p>
+          <i class="icon ion-upload playPauseIcon"></i>
+        </div>
+        <label class="circle state" ng-hide="uploaded">
+          <p>Upload Song</p>
+          <i class="icon ion-upload"></i>
+          <input type="file" id="songFile" fileread callback-fn="uploadSong(file)" accept="audio/*" capture="microphone" ng-hide="true" />
+        </label>
+        <!--<audio loop id="song"></audio>-->
+
+      </div> <!-- end of inner circle -->
+    </div> <!-- end of outer circle -->
+    </div> <!-- end of start circle -->
+
+    <div ng-show="endActive">
     <div class="center circle outer darkred" ng-model="slider" style="width:{{diameter}}px;height:{{diameter}}px;">
 
-      <div class="center knob knob-red" on-drag="startChange($event)" data-tap-disabled="true" id="segmentKnob">
-      </div> <!-- end of segment knob -->
+      <div class="center knob knob-red" on-drag="endChange($event)" data-tap-disabled="true" id="endKnob">
+      </div> <!-- end of end knob -->
 
       <div class="center circle inner lightred" ng-click="playPause()" id="songChooser" >
         <div class="circle state" ng-show="uploaded">
@@ -107,11 +135,13 @@
 
       </div> <!-- end of inner circle -->
     </div> <!-- end of outer circle -->
-    </div> <!-- end of segment circle -->
+    </div> <!-- end of end circle -->
 
     <div class="buttons" data-tap-disabled="true">
       <button class="button lightblue" ng-click="controlTempo()"><i class="icon icon-white ion-ios-analytics-outline"></i></button>
-      <button class="button lightred" ng-click="controlSegment()"><i class="icon icon-white ion-ios-timer-outline"></i></button>
+      <button class="button lightgreen" ng-click="controlStart()"><i class="icon icon-white ion-ios-timer-outline"></i></button>
+      <button class="button lightred" ng-click="controlEnd()"><i class="icon icon-white ion-ios-timer-outline"></i></button>
+      <button class="button" ng-click="toggleLoop()"><i class="icon {{loopStatus}} ion-ios-infinite-outline"></i></button>
     </div>
       
     </ion-content> 

@@ -22,6 +22,7 @@ angular.module('circleTemper', ['ionic'])
   var canvas;
   var ctx;
   var file;
+  var sample;
 
   /*
    * Function to initialize all variables and objects
@@ -63,9 +64,14 @@ angular.module('circleTemper', ['ionic'])
     ctx = canvas.getContext("2d");
     // ctx.font = "11px Arial"; 
     $scope.tempoActive = true;
-    $scope.segmentActive = false;
+    $scope.startActive = false;
+    $scope.endActive = false;
 
-    $scope.start = $scope.end = 0;
+    sample = false;
+    $scope.song.loop = true;
+    $scope.loopStatus = "on";
+
+    $scope.start = 0;
 
   }; $scope.initialize(); // call to initialize
 
@@ -117,7 +123,7 @@ angular.module('circleTemper', ['ionic'])
     if($scope.tempoActive){
       value = 1 - ($scope.rad / (DOS_PI * $scope.level));
     }
-    if($scope.segmentActive){
+    else if($scope.startActive || $scope.endActive){
       value = - ($scope.rad / (DOS_PI * $scope.level)) * $scope.song.duration;
     }
     
@@ -151,18 +157,28 @@ angular.module('circleTemper', ['ionic'])
   }
 
   /* 
-   * Change the tempo according to
+   * Change the start position according to
    * mouse's x & y coordinates
    */
   $scope.startChange = function(e) {
 
-    $scope.start = getKnobValue(e,"segmentKnob");
-    $scope.song.currentTime = $scope.start;
+    $scope.start = getKnobValue(e,"startKnob");
+    $scope.updateSampleStartTime();
+
+  }
+  /* 
+   * Change the end position according to
+   * mouse's x & y coordinates
+   */
+  $scope.endChange = function(e) {
+
+    $scope.end = getKnobValue(e,"endKnob");
+    $scope.updateSampleEndTime();
 
   }
 
   /* 
-   * Graphically change the position of the bar
+   * Graphically change the position of the knob
    */
   $scope.updateRotation = function(knob) {
     document.getElementById(knob).style.transform="rotate("+(-$scope.rad)+"rad)";
@@ -174,6 +190,23 @@ angular.module('circleTemper', ['ionic'])
   $scope.updatePlaybackRate = function(){
     if($scope.uploaded){
       $scope.song.playbackRate = $scope.tempo;
+    }
+  }
+  /* 
+   * Update the sample's start time
+   */
+  $scope.updateSampleStartTime = function(){
+    if($scope.uploaded){
+      $scope.song.currentTime =  $scope.start;
+    }
+  }
+
+  /* 
+   * Update the sample's end time
+   */
+  $scope.updateSampleEndTime = function(){
+    if($scope.uploaded){
+      
     }
   }
 
@@ -216,6 +249,21 @@ angular.module('circleTemper', ['ionic'])
     
     $scope.updatePlaybackRate();
     $scope.song.muted = false;
+
+    $scope.song.ontimeupdate = function(){
+      if(!$scope.end){
+        $scope.end = $scope.song.duration;
+      }
+      if(($scope.end > $scope.start)){
+        if($scope.song.currentTime >= $scope.end){
+          $scope.song.currentTime = $scope.start;
+          if(!$scope.song.loop){
+            $scope.pause();   
+          }
+        }
+      }
+    };
+
     $scope.uploaded = true;
   }
 
@@ -226,19 +274,27 @@ angular.module('circleTemper', ['ionic'])
     if($scope.uploaded){
       
       if($scope.song.paused){
-        $scope.song.play();
-        for(var i=0;i<playPauseIcon.length; i++){
-          angular.element(playPauseIcon[i]).removeClass('ion-play');
-          angular.element(playPauseIcon[i]).addClass('ion-pause');
-        }
+        $scope.play();
       }
       else{
-        $scope.song.pause();
-        for(var i=0;i<playPauseIcon.length; i++){
-          angular.element(playPauseIcon[i]).removeClass('ion-pause');
-          angular.element(playPauseIcon[i]).addClass('ion-play');
-        }
+        $scope.pause();
       }
+    }
+  }
+
+  $scope.play = function() {
+    $scope.song.play();
+    for(var i=0;i<playPauseIcon.length; i++){
+      angular.element(playPauseIcon[i]).removeClass('ion-play');
+      angular.element(playPauseIcon[i]).addClass('ion-pause');
+    }
+  }
+
+  $scope.pause = function() {
+    $scope.song.pause();
+    for(var i=0;i<playPauseIcon.length; i++){
+      angular.element(playPauseIcon[i]).removeClass('ion-pause');
+      angular.element(playPauseIcon[i]).addClass('ion-play');
     }
   }
 
@@ -251,7 +307,8 @@ angular.module('circleTemper', ['ionic'])
     $scope.initialize();
     $scope.updateRotation("tempoKnob");
     $scope.updatePlaybackRate();
-    $scope.updateRotation("segmentKnob");
+    $scope.updateRotation("startKnob");
+    $scope.updateRotation("endKnob");
 
     $scope.song.pause();
     $scope.song.setAttribute('src','');
@@ -307,7 +364,8 @@ angular.module('circleTemper', ['ionic'])
 
   clearEffects = function(){
     $scope.tempoActive = false;
-    $scope.segmentActive = false;
+    $scope.startActive = false;
+    $scope.endActive = false;
   }
 
   $scope.controlTempo = function(){
@@ -315,10 +373,25 @@ angular.module('circleTemper', ['ionic'])
     $scope.tempoActive = true;
   }
 
-  $scope.controlSegment = function(){
+  $scope.controlStart = function(){
     clearEffects();
-    $scope.segmentActive = true;
+    $scope.startActive = true;
 
+  }
+  $scope.controlEnd = function(){
+    clearEffects();
+    $scope.endActive = true;
+
+  }
+  $scope.toggleLoop = function(){
+    if($scope.song.loop){
+      $scope.song.loop = false;
+      $scope.loopStatus = "off";
+    }
+    else{
+      $scope.song.loop = true;
+      $scope.loopStatus = "on";
+    }
   }
 
 

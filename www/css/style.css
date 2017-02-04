@@ -55,6 +55,19 @@ html, body{
 	background: #f9f9f9;
 }
 
+.darkgreen {
+	background: #155129;
+}
+.lightgreen {
+	background: #28964f;
+}
+.knob-green {
+	background: #e3ede6;
+}
+
+.on{
+	color: #77abff;
+}
 
 .icon-white {
 	color: white;
