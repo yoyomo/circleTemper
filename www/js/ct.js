@@ -132,8 +132,8 @@ angular.module('circleTemper', ['ionic'])
         $scope.rad -= DOS_PI;
         $scope.deg -= 360;
       }
-      $scope.rad -= DOS_PI*($scope.levelCount);
-      $scope.deg -= 360*($scope.levelCount);
+      $scope.rad += DOS_PI*($scope.levelCount);
+      $scope.deg += 360*($scope.levelCount);
     }
 
     //update rotation & tempo
@@ -277,10 +277,18 @@ angular.module('circleTemper', ['ionic'])
    * Decrease the level of precision of tempo ratio
    */
   $scope.decreaseLevel = function(){
-    $scope.level = ($scope.level===1) ? 1 : $scope.level - 1;
-    $scope.reverseKnobChange();
-    if($scope.levelCount > $scope.level){
-      $scope.levelCount--;
+    if($scope.level===1) {
+      $scope.level = 1
+    }
+    else{
+      $scope.level--;
+      $scope.reverseKnobChange();
+      if($scope.levelCount > $scope.level){
+        $scope.levelCount--;
+      }
+      else if($scope.levelCount < 0){
+        $scope.levelCount ++;
+      }
     }
   }
 
@@ -291,7 +299,13 @@ angular.module('circleTemper', ['ionic'])
     $scope.level++;
     $scope.reverseKnobChange();
     $scope.quadrant = getQuadrant();
-    if($scope.quadrant <= prevQuadrant){
+    if($scope.levelCount < 0 || ($scope.levelCount<1 && $scope.quadrant !== prevQuadrant)){
+      $scope.levelCount--;
+    }
+    else if($scope.quadrant === prevQuadrant && $scope.quadrant === 1 || $scope.levelCount < 1){
+      // do nothing
+    }
+    else if($scope.quadrant <= prevQuadrant){
       $scope.levelCount++;
       prevQuadrant = $scope.quadrant;
     }
