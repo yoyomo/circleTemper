@@ -44,16 +44,12 @@
         <i class="icon ion-ios-analytics-outline" id="effectIcon"></i>
         <span class="title" ng-bind="tempo"></span>
       </div>
-      <div ng-show="startActive">
+      <div ng-show="startActive || endActive">
         <i class="icon ion-ios-timer-outline" id="effectIcon"></i>
-        <span class="title"><span ng-bind="start"> </span>
-        <span ng-bind="end"></span>
-        </span>
-      </div>
-      <div ng-show="endActive">
-        <i class="icon ion-ios-timer-outline" id="effectIcon"></i>
-        <span class="title"><span ng-bind="start"> </span>
-        <span ng-bind="end"></span>
+        <span class="title">
+          <span ng-bind="start"></span>
+          <span ng-bind="displayCurrentTime"></span>
+          <span ng-bind="end"></span>
         </span>
       </div>
     </ion-header-bar> <!-- end of subheader -->
@@ -67,7 +63,7 @@
     {{'deg: '+ deg + ' rad: ' + rad}}<br>
     {{'slow? '+ slow}} <br>
     {{'song name: ' + songName +' song src: '+ song.src}}<br>
-    {{'current position: ' + currPos}}<br>
+    {{'current time: ' + song.currentTime}}<br>
     {{'duration: ' + song.duration}}<br>
     </div> <!-- end of debug -->
 

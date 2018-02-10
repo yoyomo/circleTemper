@@ -3,6 +3,7 @@
 // constants
 var DEBUG = false;
 var DOS_PI = 2 * Math.PI;
+var GRANULARITY = 30;
 
 angular.module('circleTemper', ['ionic'])
 
@@ -133,7 +134,7 @@ angular.module('circleTemper', ['ionic'])
       value = 0;
       $scope.rad = DOS_PI * $scope.level;
       $scope.deg = 360 * $scope.level;
-      return value;
+      //return value;
     } 
     
     $scope.updateRotation(knob);
@@ -150,10 +151,8 @@ angular.module('circleTemper', ['ionic'])
    * mouse's x & y coordinates
    */
   $scope.tempoChange = function(e) {
-
     $scope.tempo = getKnobValue(e,"tempoKnob");
     $scope.updatePlaybackRate();
-
   }
 
   /* 
@@ -163,7 +162,10 @@ angular.module('circleTemper', ['ionic'])
   $scope.startChange = function(e) {
 
     $scope.start = getKnobValue(e,"startKnob");
-    $scope.updateSampleStartTime();
+    if($scope.uploaded){
+      $scope.song.currentTime =  $scope.start;
+      console.log("start time: "+$scope.song.currentTime);
+    }
 
   }
   /* 
@@ -171,10 +173,11 @@ angular.module('circleTemper', ['ionic'])
    * mouse's x & y coordinates
    */
   $scope.endChange = function(e) {
-
     $scope.end = getKnobValue(e,"endKnob");
-    $scope.updateSampleEndTime();
-
+    if($scope.uploaded){
+      $scope.loopOrEndSong();
+      console.log("end time: "+$scope.end);
+    }
   }
 
   /* 
@@ -189,24 +192,35 @@ angular.module('circleTemper', ['ionic'])
    */
   $scope.updatePlaybackRate = function(){
     if($scope.uploaded){
-      $scope.song.playbackRate = $scope.tempo;
-    }
-  }
-  /* 
-   * Update the sample's start time
-   */
-  $scope.updateSampleStartTime = function(){
-    if($scope.uploaded){
-      $scope.song.currentTime =  $scope.start;
+      try{
+        $scope.song.playbackRate = $scope.tempo;
+      }catch(e){
+        console.log("error: "+e);
+      }
+      console.log("tempo: "+$scope.song.playbackRate);
     }
   }
 
-  /* 
-   * Update the sample's end time
-   */
-  $scope.updateSampleEndTime = function(){
-    if($scope.uploaded){
-      
+  setInterval(function () {
+    if($scope.isPlaying()){
+      $scope.loopOrEndSong();
+      $scope.displayCurrentTime = $scope.song.currentTime;
+    }
+  }, GRANULARITY);
+
+  var smartBuffer = {time: 0, count: 0};
+  $scope.loopOrEndSong = function() {    
+    if(($scope.end > $scope.start)){
+      if($scope.song.currentTime > ($scope.end - smartBuffer.time)) {
+        smartBuffer.count++;
+        smartBuffer.time = (($scope.song.currentTime - $scope.end) + smartBuffer.time) / smartBuffer.count;
+        console.log("looping at: "+$scope.song.currentTime+" > "+$scope.end);
+        $scope.song.currentTime = $scope.start;
+
+        if(!$scope.song.loop){
+          $scope.pause();   
+        }
+      }
     }
   }
 
@@ -216,7 +230,6 @@ angular.module('circleTemper', ['ionic'])
   $scope.decreaseLevel = function(){
     $scope.level--;
     if($scope.level < 1) $scope.level = 1;
-
   }
 
   /* 
@@ -224,7 +237,6 @@ angular.module('circleTemper', ['ionic'])
    */
   $scope.increaseLevel = function(){
     $scope.level++;
-
   }  
 
   /* 
@@ -254,23 +266,14 @@ angular.module('circleTemper', ['ionic'])
       $scope.end = $scope.song.duration;
     };
     $scope.song.ontimeupdate = function(){
-      var buffer = 0.44;
-      
-      if(($scope.end > $scope.start)){
-        if($scope.song.currentTime > ($scope.end - buffer)) {
-          console.log($scope.song.currentTime+" > "+$scope.end);
-          $scope.song.currentTime = $scope.start;
-          if(!$scope.song.loop){
-            $scope.pause();   
-          }
-          else{
-            //$scope.play();
-          }
-        }
-      }
+      $scope.loopOrEndSong();
     };
 
     $scope.uploaded = true;
+  }
+
+  $scope.isPlaying = function(){
+    return $scope.uploaded && !$scope.song.paused;
   }
 
   /* 
@@ -279,11 +282,11 @@ angular.module('circleTemper', ['ionic'])
   $scope.playPause = function(){
     if($scope.uploaded){
       
-      if($scope.song.paused){
-        $scope.play();
+      if($scope.isPlaying()){
+        $scope.pause();
       }
       else{
-        $scope.pause();
+        $scope.play();
       }
     }
   }
