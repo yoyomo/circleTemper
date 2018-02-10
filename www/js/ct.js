@@ -1,8 +1,11 @@
 // Circle Temper js
 
 // constants
-var DEBUG = false;
-var DOS_PI = 2 * Math.PI;
+var DEBUG = true;
+var PI = Math.PI;
+var DOS_PI = 2 * PI;
+var PI_MEDIO = PI / 2;
+var TRES_PI_MEDIO = 3 * PI_MEDIO
 var GRANULARITY = 30;
 
 angular.module('circleTemper', ['ionic'])
@@ -13,8 +16,7 @@ angular.module('circleTemper', ['ionic'])
   var d;
   var rotX;
   var rotY;
-  var prevX;
-  var prevY;
+  var prevQuadrant;
   var playPauseIcon;
   var effectIcon;
   var blob;
@@ -24,6 +26,7 @@ angular.module('circleTemper', ['ionic'])
   var ctx;
   var file;
   var sample;
+  var smartBuffer = {time: 0, count: 0};
 
   /*
    * Function to initialize all variables and objects
@@ -50,8 +53,7 @@ angular.module('circleTemper', ['ionic'])
     $scope.slow = true;
     rotX = windowWidth / 2;
     rotY = windowHeight / 2;
-    prevX = rotX;
-    prevY = rotY + $scope.diameter;
+    prevQuadrant = 1;
 
     $scope.songName = "";
     $scope.uploaded = false;
@@ -71,35 +73,49 @@ angular.module('circleTemper', ['ionic'])
     sample = false;
     $scope.song.loop = true;
     $scope.loopStatus = "on";
+    smartBuffer = {time: 0, count: 0};
 
     $scope.start = 0;
 
   }; $scope.initialize(); // call to initialize
 
+  getQuadrant = function(){
+    var angle = $scope.rad % DOS_PI; // [0..360) if angle is positive, (-360..0] if negative
+    if (angle < 0) angle += DOS_PI; // Back to [0..360)
+    return Math.floor((angle/PI_MEDIO) % 4 + 1); 
+  }
 
   /* 
-   * Change the knob according to
-   * mouse's x & y coordinates
-   */
+  * Change the knob according to
+  * mouse's x & y coordinates
+  *       x
+  *       
+  *     I | IV
+  * y ____|____
+  *       |    
+  *    II | III
+  */
   getKnobValue = function(e,knob){
     var value;
     //rearrange coord. with point of reference
     $scope.x = (rotY) - e.gesture.center.pageY;
     $scope.y = (rotX) - e.gesture.center.pageX;
 
-    //calculate angle
+    // calculate angle
     $scope.rad = Math.atan2($scope.y , $scope.x);
     $scope.deg = $scope.rad * 180 / Math.PI;
 
-    // check if is getting slower or faster  
-
-    if($scope.x > 0 && prevY < 0 && $scope.y >= 0){
-      $scope.slow = true;
-      $scope.levelCount++;
-    }
-    else if($scope.x > 0 && prevY > 0 && $scope.y <= 0){
-      $scope.slow = false;
-      $scope.levelCount--;
+    // check if is getting slower or faster 
+    $scope.quadrant = getQuadrant();
+    if($scope.quadrant === 1 || $scope.quadrant === 4){
+      if(prevQuadrant===4 && $scope.quadrant === 1){
+        $scope.slow = true;
+        $scope.levelCount++;
+      }
+      else if(prevQuadrant ===1 && $scope.quadrant === 4){
+        $scope.slow = false;
+        $scope.levelCount--;
+      }
     }
 
     // Update angles according to direction & level
@@ -116,8 +132,8 @@ angular.module('circleTemper', ['ionic'])
         $scope.rad -= DOS_PI;
         $scope.deg -= 360;
       }
-      $scope.rad -= DOS_PI*(-$scope.levelCount);
-      $scope.deg -= 360*(-$scope.levelCount);
+      $scope.rad -= DOS_PI*($scope.levelCount);
+      $scope.deg -= 360*($scope.levelCount);
     }
 
     //update rotation & tempo
@@ -126,22 +142,20 @@ angular.module('circleTemper', ['ionic'])
     }
     else if($scope.startActive || $scope.endActive){
       value = - ($scope.rad / (DOS_PI * $scope.level)) * $scope.song.duration;
+      if (value < 0) prevQuadrant = $scope.quadrant;
     }
     
-    //protect from negative values
-    if(value< 0){
+    // protect from negative values
+    if(value < 0){
       $scope.levelCount = $scope.level;
       value = 0;
       $scope.rad = DOS_PI * $scope.level;
       $scope.deg = 360 * $scope.level;
-      //return value;
     } 
-    
-    $scope.updateRotation(knob);
-
-    //exiting
-    prevX = $scope.x;
-    prevY = $scope.y;
+    else{
+      $scope.updateRotation(knob);
+      prevQuadrant = $scope.quadrant;
+    }    
 
     return value;
   }
@@ -160,10 +174,15 @@ angular.module('circleTemper', ['ionic'])
    * mouse's x & y coordinates
    */
   $scope.startChange = function(e) {
-
-    $scope.start = getKnobValue(e,"startKnob");
     if($scope.uploaded){
-      $scope.song.currentTime =  $scope.start;
+      $scope.start = getKnobValue(e,"startKnob") % $scope.song.duration;
+      try{
+        $scope.song.currentTime =  $scope.start;
+      }catch(e){
+        console.log("error: "+e);
+        $scope.start = 0;
+        $scope.reverseKnobChange();
+      }
       console.log("start time: "+$scope.song.currentTime);
     }
 
@@ -173,10 +192,10 @@ angular.module('circleTemper', ['ionic'])
    * mouse's x & y coordinates
    */
   $scope.endChange = function(e) {
-    $scope.end = getKnobValue(e,"endKnob");
     if($scope.uploaded){
-      $scope.loopOrEndSong();
+      $scope.end = getKnobValue(e,"endKnob");
       console.log("end time: "+$scope.end);
+      $scope.loopOrEndSong();
     }
   }
 
@@ -196,29 +215,59 @@ angular.module('circleTemper', ['ionic'])
         $scope.song.playbackRate = $scope.tempo;
       }catch(e){
         console.log("error: "+e);
+        $scope.tempo = $scope.song.playbackRate;
+        $scope.reverseKnobChange();
       }
       console.log("tempo: "+$scope.song.playbackRate);
     }
   }
 
-  setInterval(function () {
-    if($scope.isPlaying()){
-      $scope.loopOrEndSong();
-      $scope.displayCurrentTime = $scope.song.currentTime;
+  $scope.reverseKnobChange = function(){
+    var value = 0;
+    var knob = "";
+    if ($scope.tempoActive) {
+      knob = "tempoKnob";
+      value = $scope.tempo;
+      $scope.rad = (1 - value) * (DOS_PI * $scope.level);
     }
+    else if($scope.startActive){
+      knob = "startKnob";
+      value = $scope.start;
+      $scope.rad = -(value / $scope.song.duration) * (DOS_PI * $scope.level);
+    }
+    else if ($scope.endActive){
+      knob = "endKnob";
+      value = $scope.end;
+      $scope.rad = -(value / $scope.song.duration) * (DOS_PI * $scope.level);
+    }
+    
+    $scope.updateRotation(knob);
+  }
+
+  setInterval(function () {
+    $scope.loopOrEndSong();
   }, GRANULARITY);
 
-  var smartBuffer = {time: 0, count: 0};
   $scope.loopOrEndSong = function() {    
-    if(($scope.end > $scope.start)){
-      if($scope.song.currentTime > ($scope.end - smartBuffer.time)) {
+    if($scope.isPlaying() && ($scope.end > $scope.start)){
+      if($scope.end === $scope.song.duration && $scope.song.currentTime === 0 && $scope.start !== 0){
+        console.log("looping at: "+$scope.song.currentTime+" > "+$scope.end);
+        $scope.song.currentTime = $scope.start;
+
+        if(!$scope.song.loop){
+          $scope.pause();
+          return;   
+        }
+      }
+      else if(($scope.song.currentTime > ($scope.end - smartBuffer.time))){
         smartBuffer.count++;
         smartBuffer.time = (($scope.song.currentTime - $scope.end) + smartBuffer.time) / smartBuffer.count;
         console.log("looping at: "+$scope.song.currentTime+" > "+$scope.end);
         $scope.song.currentTime = $scope.start;
 
         if(!$scope.song.loop){
-          $scope.pause();   
+          $scope.pause();
+          return;   
         }
       }
     }
@@ -228,8 +277,11 @@ angular.module('circleTemper', ['ionic'])
    * Decrease the level of precision of tempo ratio
    */
   $scope.decreaseLevel = function(){
-    $scope.level--;
-    if($scope.level < 1) $scope.level = 1;
+    $scope.level = ($scope.level===1) ? 1 : $scope.level - 1;
+    $scope.reverseKnobChange();
+    if($scope.levelCount > $scope.level){
+      $scope.levelCount--;
+    }
   }
 
   /* 
@@ -237,6 +289,12 @@ angular.module('circleTemper', ['ionic'])
    */
   $scope.increaseLevel = function(){
     $scope.level++;
+    $scope.reverseKnobChange();
+    $scope.quadrant = getQuadrant();
+    if($scope.quadrant <= prevQuadrant){
+      $scope.levelCount++;
+      prevQuadrant = $scope.quadrant;
+    }
   }  
 
   /* 
@@ -267,6 +325,10 @@ angular.module('circleTemper', ['ionic'])
     };
     $scope.song.ontimeupdate = function(){
       $scope.loopOrEndSong();
+    };
+    $scope.song.onended = function(){
+      console.log("ended");
+      $scope.restart();
     };
 
     $scope.uploaded = true;

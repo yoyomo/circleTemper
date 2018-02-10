@@ -48,7 +48,6 @@
         <i class="icon ion-ios-timer-outline" id="effectIcon"></i>
         <span class="title">
           <span ng-bind="start"></span>
-          <span ng-bind="displayCurrentTime"></span>
           <span ng-bind="end"></span>
         </span>
       </div>
@@ -60,7 +59,7 @@
     {{'diameter: '+ diameter }}<br>
     {{'tempo: '+ tempo + ' level: '+ levelCount +'/'+level}} <br>
     {{'x: '+ x + ' y: ' + y}} <br>
-    {{'deg: '+ deg + ' rad: ' + rad}}<br>
+    {{'deg: '+ deg + ' rad: ' + rad + ' quadrant: ' + quadrant}}<br>
     {{'slow? '+ slow}} <br>
     {{'song name: ' + songName +' song src: '+ song.src}}<br>
     {{'current time: ' + song.currentTime}}<br>
@@ -114,7 +113,7 @@
     <div ng-show="endActive">
     <div class="center circle outer darkred" ng-model="slider" style="width:{{diameter}}px;height:{{diameter}}px;">
 
-      <div class="center knob knob-red" on-drag="endChange($event)" data-tap-disabled="true" id="endKnob">
+      <div class="center knob knob-red" on-drag="endChange($event)" ng-mouseup="restart()" data-tap-disabled="true" id="endKnob">
       </div> <!-- end of end knob -->
 
       <div class="center circle inner lightred" ng-click="playPause()" id="songChooser" >
