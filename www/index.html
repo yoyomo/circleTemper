@@ -26,7 +26,7 @@
     <ion-header-bar align-title="center" class="bar-stable">
 
       <div class="buttons">
-        <button class="button icon ion-ios-skipbackward" ng-click="restart()"></button>
+        <button class="button icon ion-ios-skipbackward" ng-click="fromTheTop()"></button>
         <button class="button icon ion-refresh" ng-click="reset()"></button>
       </div>
 
@@ -44,11 +44,11 @@
         <i class="icon ion-ios-analytics-outline" id="effectIcon"></i>
         <span class="title" ng-bind="tempo"></span>
       </div>
-      <div ng-show="startActive || endActive">
+      <div ng-show="startTimeActive || endTimeActive">
         <i class="icon ion-ios-timer-outline" id="effectIcon"></i>
         <span class="title">
-          <span ng-bind="start"></span>
-          <span ng-bind="end"></span>
+          <span ng-bind="startTime"></span>
+          <span ng-bind="endTime"></span>
         </span>
       </div>
     </ion-header-bar> <!-- end of subheader -->
@@ -88,11 +88,11 @@
     </div> <!-- end of outer circle -->
     </div> <!-- end of tempo circle -->
 
-    <div ng-show="startActive">
+    <div ng-show="startTimeActive">
     <div class="center circle outer darkgreen" ng-model="slider" style="width:{{diameter}}px;height:{{diameter}}px;">
 
-      <div class="center knob knob-green" on-drag="startChange($event)" data-tap-disabled="true" id="startKnob">
-      </div> <!-- end of start knob -->
+      <div class="center knob knob-green" on-drag="startTimeChange($event)" data-tap-disabled="true" id="startTimeKnob">
+      </div> <!-- end of startTime knob -->
 
       <div class="center circle inner lightgreen" ng-click="playPause()" id="songChooser" >
         <div class="circle state" ng-show="uploaded">
@@ -108,13 +108,13 @@
 
       </div> <!-- end of inner circle -->
     </div> <!-- end of outer circle -->
-    </div> <!-- end of start circle -->
+    </div> <!-- end of startTime circle -->
 
-    <div ng-show="endActive">
+    <div ng-show="endTimeActive">
     <div class="center circle outer darkred" ng-model="slider" style="width:{{diameter}}px;height:{{diameter}}px;">
 
-      <div class="center knob knob-red" on-drag="endChange($event)" ng-mouseup="restart()" data-tap-disabled="true" id="endKnob">
-      </div> <!-- end of end knob -->
+      <div class="center knob knob-red" on-drag="endTimeChange($event)" ng-mouseup="fromTheTop()" data-tap-disabled="true" id="endTimeKnob">
+      </div> <!-- end of endTime knob -->
 
       <div class="center circle inner lightred" ng-click="playPause()" id="songChooser" >
         <div class="circle state" ng-show="uploaded">
@@ -130,13 +130,13 @@
 
       </div> <!-- end of inner circle -->
     </div> <!-- end of outer circle -->
-    </div> <!-- end of end circle -->
+    </div> <!-- end of endTime circle -->
 
     <div class="buttons" data-tap-disabled="true">
       <button class="button lightblue" ng-click="controlTempo()"><i class="icon icon-white ion-ios-analytics-outline"></i></button>
-      <button class="button lightgreen" ng-click="controlStart()"><i class="icon icon-white ion-ios-timer-outline"></i></button>
-      <button class="button lightred" ng-click="controlEnd()"><i class="icon icon-white ion-ios-timer-outline"></i></button>
-      <button class="button" ng-click="toggleLoop()"><i class="icon {{loopStatus}} ion-ios-infinite-outline"></i></button>
+      <button class="button lightgreen" ng-click="controlStartTime()"><i class="icon icon-white ion-ios-timer-outline"></i></button>
+      <button class="button lightred" ng-click="controlEndTime()"><i class="icon icon-white ion-ios-timer-outline"></i></button>
+      <button class="button" ng-click="toggleLoop()"><i class="icon ion-ios-infinite-outline" ng-class="getLoopStatus()"></i></button>
     </div>
       
     </ion-content> 

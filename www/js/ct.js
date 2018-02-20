@@ -6,7 +6,7 @@ var PI = Math.PI;
 var DOS_PI = 2 * PI;
 var PI_MEDIO = PI / 2;
 var TRES_PI_MEDIO = 3 * PI_MEDIO
-var GRANULARITY = 30;
+var GRANULARITY = 1;
 
 angular.module('circleTemper', ['ionic'])
 
@@ -67,15 +67,15 @@ angular.module('circleTemper', ['ionic'])
     ctx = canvas.getContext("2d");
     // ctx.font = "11px Arial"; 
     $scope.tempoActive = true;
-    $scope.startActive = false;
-    $scope.endActive = false;
+    $scope.startTimeActive = false;
+    $scope.endTimeActive = false;
 
     sample = false;
-    $scope.song.loop = true;
-    $scope.loopStatus = "on";
+    $scope.song.loop = false;
+    $scope.loop = true;
     smartBuffer = {time: 0, count: 0};
 
-    $scope.start = 0;
+    $scope.startTime = 0;
 
   }; $scope.initialize(); // call to initialize
 
@@ -140,7 +140,7 @@ angular.module('circleTemper', ['ionic'])
     if($scope.tempoActive){
       value = 1 - ($scope.rad / (DOS_PI * $scope.level));
     }
-    else if($scope.startActive || $scope.endActive){
+    else if($scope.startTimeActive || $scope.endTimeActive){
       value = - ($scope.rad / (DOS_PI * $scope.level)) * $scope.song.duration;
       if (value < 0) prevQuadrant = $scope.quadrant;
     }
@@ -170,17 +170,17 @@ angular.module('circleTemper', ['ionic'])
   }
 
   /* 
-   * Change the start position according to
+   * Change the startTime position according to
    * mouse's x & y coordinates
    */
-  $scope.startChange = function(e) {
+  $scope.startTimeChange = function(e) {
     if($scope.uploaded){
-      $scope.start = getKnobValue(e,"startKnob") % $scope.song.duration;
+      $scope.startTime = getKnobValue(e,"startTimeKnob") % $scope.song.duration;
       try{
-        $scope.song.currentTime =  $scope.start;
+        $scope.song.currentTime =  $scope.startTime;
       }catch(e){
         console.log("error: "+e);
-        $scope.start = 0;
+        $scope.startTime = 0;
         $scope.reverseKnobChange();
       }
       console.log("start time: "+$scope.song.currentTime);
@@ -191,10 +191,18 @@ angular.module('circleTemper', ['ionic'])
    * Change the end position according to
    * mouse's x & y coordinates
    */
-  $scope.endChange = function(e) {
+  $scope.endTimeChange = function(e) {
     if($scope.uploaded){
-      $scope.end = getKnobValue(e,"endKnob");
-      console.log("end time: "+$scope.end);
+      $scope.endTime = getKnobValue(e,"endTimeKnob");
+      if($scope.endTime > $scope.song.duration){
+        $scope.endTime = $scope.song.duration;
+        $scope.reverseKnobChange();
+      }
+      else if($scope.endTime < $scope.startTime){
+        $scope.endTime = $scope.startTime;
+        $scope.reverseKnobChange();
+      }
+      console.log("end time: "+$scope.endTime);
       $scope.loopOrEndSong();
     }
   }
@@ -230,14 +238,14 @@ angular.module('circleTemper', ['ionic'])
       value = $scope.tempo;
       $scope.rad = (1 - value) * (DOS_PI * $scope.level);
     }
-    else if($scope.startActive){
-      knob = "startKnob";
-      value = $scope.start;
+    else if($scope.startTimeActive){
+      knob = "startTimeKnob";
+      value = $scope.startTime;
       $scope.rad = -(value / $scope.song.duration) * (DOS_PI * $scope.level);
     }
-    else if ($scope.endActive){
-      knob = "endKnob";
-      value = $scope.end;
+    else if ($scope.endTimeActive){
+      knob = "endTimeKnob";
+      value = $scope.endTime;
       $scope.rad = -(value / $scope.song.duration) * (DOS_PI * $scope.level);
     }
     
@@ -248,27 +256,15 @@ angular.module('circleTemper', ['ionic'])
     $scope.loopOrEndSong();
   }, GRANULARITY);
 
-  $scope.loopOrEndSong = function() {    
-    if($scope.isPlaying() && ($scope.end > $scope.start)){
-      if($scope.end === $scope.song.duration && $scope.song.currentTime === 0 && $scope.start !== 0){
-        console.log("looping at: "+$scope.song.currentTime+" > "+$scope.end);
-        $scope.song.currentTime = $scope.start;
-
-        if(!$scope.song.loop){
-          $scope.pause();
-          return;   
-        }
-      }
-      else if(($scope.song.currentTime > ($scope.end - smartBuffer.time))){
-        smartBuffer.count++;
-        smartBuffer.time = (($scope.song.currentTime - $scope.end) + smartBuffer.time) / smartBuffer.count;
-        console.log("looping at: "+$scope.song.currentTime+" > "+$scope.end);
-        $scope.song.currentTime = $scope.start;
-
-        if(!$scope.song.loop){
-          $scope.pause();
-          return;   
-        }
+  $scope.loopOrEndSong = function() {
+    if($scope.isPlaying() && ($scope.endTime > $scope.startTime) && 
+      ($scope.song.currentTime > $scope.endTime)){
+      smartBuffer.count++;
+      console.log("looping at: "+$scope.song.currentTime+" > "+$scope.endTime);
+      $scope.song.currentTime = $scope.startTime;
+      if(!$scope.loop){
+        $scope.pause();
+        return;   
       }
     }
   }
@@ -335,14 +331,17 @@ angular.module('circleTemper', ['ionic'])
     $scope.song.muted = false;
 
     $scope.song.ondurationchange = function(){
-      $scope.end = $scope.song.duration;
-    };
-    $scope.song.ontimeupdate = function(){
-      $scope.loopOrEndSong();
+      $scope.endTime = $scope.song.duration;
     };
     $scope.song.onended = function(){
-      console.log("ended");
-      $scope.restart();
+      $scope.fromTheTop();
+      if($scope.loop) { 
+        $scope.play();
+        console.log("looping");
+      } else { 
+        $scope.pause();
+         console.log("ended");
+       }
     };
 
     $scope.uploaded = true;
@@ -357,7 +356,6 @@ angular.module('circleTemper', ['ionic'])
    */
   $scope.playPause = function(){
     if($scope.uploaded){
-      
       if($scope.isPlaying()){
         $scope.pause();
       }
@@ -392,8 +390,8 @@ angular.module('circleTemper', ['ionic'])
     $scope.initialize();
     $scope.updateRotation("tempoKnob");
     $scope.updatePlaybackRate();
-    $scope.updateRotation("startKnob");
-    $scope.updateRotation("endKnob");
+    $scope.updateRotation("startTimeKnob");
+    $scope.updateRotation("endTimeKnob");
 
     $scope.song.pause();
     $scope.song.setAttribute('src','');
@@ -412,9 +410,9 @@ angular.module('circleTemper', ['ionic'])
   /* 
    * Restarts the song according to sample position
    */
-  $scope.restart = function(){
+  $scope.fromTheTop = function(){
     $scope.playPause();
-    $scope.song.currentTime = $scope.start;
+    $scope.song.currentTime = $scope.startTime;
     $scope.playPause();
   }
 
@@ -428,7 +426,7 @@ angular.module('circleTemper', ['ionic'])
       alert("No song uploaded");
       return;
     }
-    else if($scope.end === 0){
+    else if($scope.endTime === 0){
       alert("No region created");
       return;
     }
@@ -436,21 +434,21 @@ angular.module('circleTemper', ['ionic'])
     var name = prompt("Save as...", $scope.songName);
     var sample = {
       "name": name,
-      "start": $scope.start,
-      "end": $scope.end
+      "startTime": $scope.startTime,
+      "endTime": $scope.endTime
     };
     localStorage.setItem('sample', JSON.stringify(sample));
 
     // Retrieve the object from storage
     var data = JSON.parse(localStorage.getItem('sample'));
-    console.log(data.name+' region: '+data.start+','+data.end);
+    console.log(data.name+' region: '+data.startTime+','+data.endTime);
 
   }
 
   clearEffects = function(){
     $scope.tempoActive = false;
-    $scope.startActive = false;
-    $scope.endActive = false;
+    $scope.startTimeActive = false;
+    $scope.endTimeActive = false;
   }
 
   $scope.controlTempo = function(){
@@ -458,25 +456,22 @@ angular.module('circleTemper', ['ionic'])
     $scope.tempoActive = true;
   }
 
-  $scope.controlStart = function(){
+  $scope.controlStartTime = function(){
     clearEffects();
-    $scope.startActive = true;
+    $scope.startTimeActive = true;
 
   }
-  $scope.controlEnd = function(){
+  $scope.controlEndTime = function(){
     clearEffects();
-    $scope.endActive = true;
+    $scope.endTimeActive = true;
 
   }
   $scope.toggleLoop = function(){
-    if($scope.song.loop){
-      $scope.song.loop = false;
-      $scope.loopStatus = "off";
-    }
-    else{
-      $scope.song.loop = true;
-      $scope.loopStatus = "on";
-    }
+    $scope.loop = !$scope.loop;
+  }
+
+  $scope.getLoopStatus = function(){
+    return ($scope.loop) ? "on": "off";
   }
 
 
