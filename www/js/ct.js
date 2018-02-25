@@ -105,7 +105,7 @@ angular.module('circleTemper', ['ionic'])
     $scope.rad = Math.atan2($scope.y , $scope.x);
     $scope.deg = $scope.rad * 180 / Math.PI;
 
-    // check if is getting slower or faster 
+    // Update level count in iteration
     $scope.quadrant = getQuadrant();
     if($scope.quadrant === 1 || $scope.quadrant === 4){
       if(prevQuadrant===4 && $scope.quadrant === 1){
@@ -230,9 +230,18 @@ angular.module('circleTemper', ['ionic'])
     }
   }
 
+  $scope.updateLevelCount = function(){
+  	numberOfIterations = $scope.rad/DOS_PI;
+  	if(numberOfIterations > 0){
+  		numberOfIterations++;
+  	}
+  	$scope.levelCount = parseInt(numberOfIterations);
+  }
+
   $scope.reverseKnobChange = function(){
     var value = 0;
     var knob = "";
+
     if ($scope.tempoActive) {
       knob = "tempoKnob";
       value = $scope.tempo;
@@ -248,6 +257,8 @@ angular.module('circleTemper', ['ionic'])
       value = $scope.endTime;
       $scope.rad = -(value / $scope.song.duration) * (DOS_PI * $scope.level);
     }
+
+  	$scope.updateLevelCount();
     
     $scope.updateRotation(knob);
   }
@@ -279,12 +290,6 @@ angular.module('circleTemper', ['ionic'])
     else{
       $scope.level--;
       $scope.reverseKnobChange();
-      if($scope.levelCount > $scope.level){
-        $scope.levelCount--;
-      }
-      else if($scope.levelCount < 0){
-        $scope.levelCount ++;
-      }
     }
   }
 
@@ -294,17 +299,6 @@ angular.module('circleTemper', ['ionic'])
   $scope.increaseLevel = function(){
     $scope.level++;
     $scope.reverseKnobChange();
-    $scope.quadrant = getQuadrant();
-    if($scope.levelCount < 0 || ($scope.levelCount<1 && $scope.quadrant !== prevQuadrant)){
-      $scope.levelCount--;
-    }
-    else if($scope.quadrant === prevQuadrant && $scope.quadrant === 1 || $scope.levelCount < 1){
-      // do nothing
-    }
-    else if($scope.quadrant <= prevQuadrant){
-      $scope.levelCount++;
-      prevQuadrant = $scope.quadrant;
-    }
   }  
 
   /* 
