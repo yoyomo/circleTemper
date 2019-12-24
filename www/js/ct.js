@@ -1,7 +1,7 @@
 // Circle Temper js
 
 // constants
-var DEBUG = true;
+var DEBUG = false;
 var PI = Math.PI;
 var DOS_PI = 2 * PI;
 var PI_MEDIO = PI / 2;
