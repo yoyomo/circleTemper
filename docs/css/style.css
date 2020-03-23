@@ -1,0 +1,125 @@
+/* the style of the app */
+html, body{
+	height: 100%;
+	width: 100%;
+}
+
+.center{
+	position:relative;
+	left:0; right:0;
+	top:0; bottom:0;
+	margin: auto;
+	z-index: 1;
+}
+.circle{
+	border-radius: 50%;
+}
+
+.outer {
+	width:0;
+	height:0;
+}
+
+.knob {
+	width: 15%;
+	height: 51%;
+	margin-bottom: 50%;
+	border-radius: 15%;
+	transform-origin: 50% 100%;
+	transform: rotate(0rad);
+}
+
+.inner {
+	position:absolute;
+	width:66%;
+	height:66%;
+	text-align: center;
+}
+.darkblue {
+	background: #1f4860;
+}
+.lightblue {
+	background: #529cc7;
+}
+.knob-blue{
+	background: #b2d3e6;
+}
+
+.darkred{
+	background: #5b0d0d;
+}
+.lightred{
+	background: #ce2f2f;
+}
+.knob-red {
+	background: #f9f9f9;
+}
+
+.darkgreen {
+	background: #155129;
+}
+.lightgreen {
+	background: #28964f;
+}
+.knob-green {
+	background: #e3ede6;
+}
+
+.on{
+	color: #77abff;
+}
+
+.icon-white {
+	color: white;
+}
+.state {
+	color: white;
+	font-family: "Courier", Courier, monospace;
+	font-size:1.25em;
+	display: block;
+	vertical-align: middle;
+	line-height:normal;
+	padding-top: 35%;
+	height:100%;
+	width:100%;
+}
+
+/* Make it a marquee */
+.marquee {
+    width: 90%;
+    margin: 0 auto;
+    overflow: hidden;
+    white-space: nowrap;
+    box-sizing: border-box;
+    animation: marquee 10s linear infinite;
+}
+
+.marquee:hover {
+    animation-play-state: paused;
+}
+
+/* Make it move */
+@keyframes marquee {
+    from   { text-indent: 100%; }
+    to { text-indent: -100%; }
+}
+
+.icon {
+	font-size: 2.5em;
+}
+
+input[type=file] {
+	opacity: 0;
+	width:0;
+	height:0;
+}
+
+/*input[type=range]
+{
+    writing-mode: bt-lr;
+    -webkit-appearance: slider-vertical;
+    width: 0;
+    height: 100%;
+    padding: 0 5px;
+}
+*/
