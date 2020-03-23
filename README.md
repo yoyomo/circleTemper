@@ -14,3 +14,5 @@ Choose a region to sample, and save it!
 
 ## Live
 https://circletemper.herokuapp.com/
+
+https://yoyomo.github.io/circleTemper/
